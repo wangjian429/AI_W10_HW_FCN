@@ -116,7 +116,12 @@ with tf.variable_scope('vgg_16/fc8'):
                                  weights_initializer=tf.zeros_initializer,
                                  scope='conv_pool3')
 #对之前得到的logits_1进行2倍的上采样
-upsampled_logits = tf.nn.conv2d_transpose(upsampled_logits, upsample_filter_tensor_x2,
+upsample_filter_np_x2_2 = bilinear_upsample_weights(2,  # upsample_factor,
+                                                  number_of_classes)
+
+upsample_filter_tensor_x2_2 = tf.Variable(upsample_filter_np_x2_2, name='vgg_16/fc8/t_conv_x2_2')
+
+upsampled_logits = tf.nn.conv2d_transpose(upsampled_logits, upsample_filter_tensor_x2_2,
                                           output_shape=tf.shape(aux_logits_8s),
                                           strides=[1, 2, 2, 1],
                                           padding='SAME')
@@ -308,7 +313,7 @@ with sess:
         feed_dict_to_use[is_training_placeholder] = True
 
         gs, _ = sess.run([global_step, train_step], feed_dict=feed_dict_to_use)
-        if gs % 1 == 0:
+        if gs % 10 == 0:
             gs, loss, summary_string = sess.run([global_step, cross_entropy_loss, merged_summary_op], feed_dict=feed_dict_to_use)
             logging.debug("step {0} Current Loss: {1} ".format(gs, loss))
             end = time.time()
